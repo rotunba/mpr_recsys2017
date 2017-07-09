@@ -211,7 +211,9 @@ public class RecommenderJob {
      * @throws ClassNotFoundException if class not found error occurs
      */
     private void executeEvaluator(Recommender recommender) throws ClassNotFoundException, IOException, LibrecException {
-        if (conf.getBoolean("rec.eval.enable")) {
+    	System.out.println(conf.getBoolean("rec.eval.enable"));
+    	if (conf.getBoolean("rec.eval.enable")) {
+        	
             String[] evalClassKeys = conf.getStrings("rec.eval.classes");
             if (evalClassKeys!= null && evalClassKeys.length > 0) {// Run the evaluator which is
                 // designated.

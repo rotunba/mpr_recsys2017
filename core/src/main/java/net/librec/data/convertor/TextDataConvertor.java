@@ -193,6 +193,7 @@ public class TextDataConvertor extends AbstractDataConvertor {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 fileSizeList.add(file.toFile().length());
+                if(!file.toFile().toString().contains("DS_Store"))//exclude mac files
                 files.add(file.toFile());
                 return super.visitFile(file, attrs);
             }
