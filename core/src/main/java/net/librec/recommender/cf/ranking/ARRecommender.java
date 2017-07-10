@@ -37,7 +37,7 @@ import java.util.Set;
  */
 @ModelData({"isRanking", "ar", "userFactors", "itemFactors"})
 public class ARRecommender extends MatrixFactorizationRecommender {
-    private List<Set<Integer>> userItemsSet;
+    private List<Set<Integer>> itemUsersSet;
 
     @Override
     protected void setup() throws LibrecException {
@@ -47,56 +47,55 @@ public class ARRecommender extends MatrixFactorizationRecommender {
     @Override
     protected void trainModel() throws LibrecException {
 
-        userItemsSet = getUserItemsSet(trainMatrix);
+        itemUsersSet = getItemUsersSet(trainMatrix);
 
         for (int iter = 1; iter <= numIterations; iter++) {
 
             loss = 0.0d;
-            for (int sampleCount = 0, smax = numUsers * 100; sampleCount < smax; sampleCount++) {
+            for (int sampleCount = 0, smax = numItems * 100; sampleCount < smax; sampleCount++) {
 
                 // randomly draw (userIdx, posItemIdx, negItemIdx)
-                int userIdx, posItemIdx = 0, negItemIdx = 0;
+                int itemIdx, posUserIdx = 0, negUserIdx = 0;
                
-                boolean doesUserLikeNothingorAll = false;
+                boolean isItemLikedByNooneOrByAll = false;
                 do {
-                	userIdx = Randoms.uniform(numUsers); //
-                	Set<Integer> itemSet = userItemsSet.get(userIdx);
+                	itemIdx = Randoms.uniform(numItems); //
+                	Set<Integer> userSet = itemUsersSet.get(itemIdx);
 					
-					doesUserLikeNothingorAll = itemSet.size() == 0 || itemSet.size() == numItems;
+                	isItemLikedByNooneOrByAll = userSet.size() == 0 || userSet.size() == numUsers;
 
-					if (!doesUserLikeNothingorAll) {
-						List<Integer> itemList = trainMatrix.getColumns(userIdx);
+					if (!isItemLikedByNooneOrByAll) {
+						List<Integer> userList = trainMatrix.getRows(itemIdx);
 
-						posItemIdx = itemList.get(Randoms.uniform(itemList.size())); // posItemIdx is preferred by
-															// userIdx
+						posUserIdx = userList.get(Randoms.uniform(userList.size())); // posUserIdx prefers itemIdx
 
-						int[] diff = diff(numItems, itemList); 
+						int[] diff = diff(numUsers, userList); 
 						
-						negItemIdx = diff[Randoms.uniform(diff.length)]; 
+						negUserIdx = diff[Randoms.uniform(diff.length)]; 
 					} 
 
-				} while (doesUserLikeNothingorAll);
+				} while (isItemLikedByNooneOrByAll);
 
                 // update parameters
-                double posPredictRating = predict(userIdx, posItemIdx);
-                double negPredictRating = predict(userIdx, negItemIdx);
+                double posPredictRating = predict(posUserIdx, itemIdx);
+                double negPredictRating = predict(negUserIdx, itemIdx);
                 double diffValue = posPredictRating - negPredictRating;
 
-                double lossValue = -Math.log(Maths.logistic(diffValue));
-                loss += lossValue;
+                double lossValue = Math.log(Maths.logistic(diffValue)); 
+                loss += lossValue * 0.5;
 
-                double deriValue = Maths.logistic(-diffValue);
+                double deriValue = Maths.logistic(-diffValue)  * 0.5;
 
                 for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
-                    double userFactorValue = userFactors.get(userIdx, factorIdx);
-                    double posItemFactorValue = itemFactors.get(posItemIdx, factorIdx);
-                    double negItemFactorValue = itemFactors.get(negItemIdx, factorIdx);
+                    double itemFactorValue = itemFactors.get(itemIdx, factorIdx);
+                    double posUserFactorValue = userFactors.get(posUserIdx, factorIdx);
+                    double negUserFactorValue = userFactors.get(negUserIdx, factorIdx);
 
-                    userFactors.add(userIdx, factorIdx, learnRate * (deriValue * (posItemFactorValue - negItemFactorValue) - regUser * userFactorValue));
-                    itemFactors.add(posItemIdx, factorIdx, learnRate * (deriValue * userFactorValue - regItem * posItemFactorValue));
-                    itemFactors.add(negItemIdx, factorIdx, learnRate * (deriValue * (-userFactorValue) - regItem * negItemFactorValue));
+                    itemFactors.add(itemIdx, factorIdx, learnRate * (deriValue * (posUserFactorValue - negUserFactorValue) - regItem * itemFactorValue));
+                    userFactors.add(posUserIdx, factorIdx, learnRate * (deriValue * itemFactorValue - regUser * posUserFactorValue));
+                    userFactors.add(negUserIdx, factorIdx, learnRate * (deriValue * (-itemFactorValue) - regUser * negUserFactorValue));
 
-                    loss += regUser * userFactorValue * userFactorValue + regItem * posItemFactorValue * posItemFactorValue + regItem * negItemFactorValue * negItemFactorValue;
+                    loss -= (regUser * itemFactorValue * itemFactorValue + regItem * posUserFactorValue * posUserFactorValue + regItem * negUserFactorValue * negUserFactorValue) * 0.5;
                 }
             }
             if (isConverged(iter) && earlyStop) {
@@ -120,11 +119,11 @@ public class ARRecommender extends MatrixFactorizationRecommender {
 		return result;
 	}
     
-    private List<Set<Integer>> getUserItemsSet(SparseMatrix sparseMatrix) {
-        List<Set<Integer>> userItemsSet = new ArrayList<>();
-        for (int userIdx = 0; userIdx < numUsers; ++userIdx) {
-            userItemsSet.add(new HashSet(sparseMatrix.getColumns(userIdx)));
+    private List<Set<Integer>> getItemUsersSet(SparseMatrix sparseMatrix) {
+        List<Set<Integer>> itemUsersSet = new ArrayList<>();
+        for (int itemIdx = 0; itemIdx < numItems; ++itemIdx) {
+        	itemUsersSet.add(new HashSet(sparseMatrix.getRows(itemIdx)));
         }
-        return userItemsSet;
+        return itemUsersSet;
     }
 }
