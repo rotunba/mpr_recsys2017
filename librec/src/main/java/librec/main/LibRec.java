@@ -31,7 +31,7 @@ import librec.baseline.ConstantGuess;
 import librec.baseline.GlobalAverage;
 import librec.baseline.ItemAverage;
 import librec.baseline.ItemCluster;
-import librec.baseline.MostPopular;
+import librec.baseline.MostPop;
 import librec.baseline.RandomGuess;
 import librec.baseline.UserAverage;
 import librec.baseline.UserCluster;
@@ -720,7 +720,7 @@ public class LibRec {
 		case "constant":
 			return new ConstantGuess(trainMatrix, testMatrix, fold);
 		case "mostpop":
-			return new MostPopular(trainMatrix, testMatrix, fold);
+			return new MostPop(trainMatrix, testMatrix, fold);
 
 			/* rating prediction */
 		case "userknn":
