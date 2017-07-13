@@ -1,3 +1,10 @@
+RecSys 2017 
+======
+
+**Paper:** Rasaq Otunba, Raimi A. Rufai, and Jessica Lin. 2017. MPR: Multi-Objective Pairwise Ranking. In Proceedings of RecSys '17, Como, Italy, August 27-31, 2017
+
+ 
+
 LibRec
 ======
 
