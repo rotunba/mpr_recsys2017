@@ -59,7 +59,9 @@ import com.google.common.cache.LoadingCache;
 @Configuration
 public abstract class Recommender implements Runnable {
 
-	/************************************ Static parameters for all recommenders ***********************************/
+	/************************************
+	 * Static parameters for all recommenders
+	 ***********************************/
 	// configer
 	public static FileConfiger cf;
 	// matrix of rating data
@@ -133,21 +135,25 @@ public abstract class Recommender implements Runnable {
 	protected static int similarityShrinkage;
 
 	/**
-	 * An indicator of initialization of static fields. This enables us to control when static fields are initialized,
-	 * while "static block" will be always initialized or executed. The latter could cause unexpected exceptions when
-	 * multiple runs (with different configuration files) are conducted sequentially, because some static settings will
-	 * not be override in such a "staic block".
+	 * An indicator of initialization of static fields. This enables us to
+	 * control when static fields are initialized, while "static block" will be
+	 * always initialized or executed. The latter could cause unexpected
+	 * exceptions when multiple runs (with different configuration files) are
+	 * conducted sequentially, because some static settings will not be override
+	 * in such a "staic block".
 	 */
 	public static boolean resetStatics = true;
 
-	/************************************ Recommender-specific parameters ****************************************/
+	/************************************
+	 * Recommender-specific parameters
+	 ****************************************/
 	// algorithm's name
 	public String algoName;
 	// current fold
 	protected int fold;
 	// fold information
 	protected String foldInfo;
-	// is output recommendation results 
+	// is output recommendation results
 	protected boolean isResultsOut = true;
 
 	// user-vector cache, item-vector cache
@@ -220,7 +226,7 @@ public abstract class Recommender implements Runnable {
 			initMean = 0.0;
 			initStd = 0.1;
 
-			cacheSpec = cf.getString("guava.cache.spec", "maximumSize=200,expireAfterAccess=2m");
+			cacheSpec = cf.getString("guava.cache.spec", "maximumSize=2000000,expireAfterAccess=2m");
 
 			rankOptions = cf.getParamOptions("item.ranking");
 			isRankingPred = rankOptions.isMainOn();
@@ -263,8 +269,8 @@ public abstract class Recommender implements Runnable {
 			DataSplitter ds = new DataSplitter(trainMatrix);
 			double ratio = 1 - validationRatio;
 
-			SparseMatrix[] trainSubsets = isSplitByDate ? ds.getRatioByRatingDate(ratio, timeMatrix) : ds
-					.getRatioByRating(ratio);
+			SparseMatrix[] trainSubsets = isSplitByDate ? ds.getRatioByRatingDate(ratio, timeMatrix)
+					: ds.getRatioByRating(ratio);
 			this.trainMatrix = trainSubsets[0];
 			this.validationMatrix = trainSubsets[1];
 		} else {
@@ -323,12 +329,14 @@ public abstract class Recommender implements Runnable {
 			// build the model
 			buildModel();
 
-			// post-processing after building a model, e.g., release intermediate memory to avoid memory leak
+			// post-processing after building a model, e.g., release
+			// intermediate memory to avoid memory leak
 			postModel();
 		} else {
 			/**
-			 * load a learned model: this code will not be executed unless "Debug.OFF" mainly for the purpose of
-			 * exemplifying how to use the saved models
+			 * load a learned model: this code will not be executed unless
+			 * "Debug.OFF" mainly for the purpose of exemplifying how to use the
+			 * saved models
 			 */
 			loadModel();
 		}
@@ -344,8 +352,8 @@ public abstract class Recommender implements Runnable {
 		// evaluation
 		if (verbose)
 			Logs.debug("{}{} evaluate test data ... ", algoName, foldInfo);
-		// TODO: to predict ratings only, or do item recommendations only
-		measures = isRankingPred ? evalRankings() : evalRatings();
+		// TODO: to do item recommendations or audience retrieval
+		measures = isRankingPred ? evalRankings() : evalRankingsPerItem();
 		String measurements = getEvalInfo(measures);
 		sw.stop();
 		long testTime = sw.elapsed(TimeUnit.MILLISECONDS) - trainTime;
@@ -406,7 +414,7 @@ public abstract class Recommender implements Runnable {
 	 */
 	public static String getEvalInfo(Map<Measure, Double> measures) {
 		String evalInfo = null;
-		if (isRankingPred) {
+		//if (isRankingPred) {
 			if (isDiverseUsed)
 				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
 						measures.get(Measure.Pre5), measures.get(Measure.Pre10), measures.get(Measure.Rec5),
@@ -419,16 +427,16 @@ public abstract class Recommender implements Runnable {
 						measures.get(Measure.AUC), measures.get(Measure.MAP), measures.get(Measure.NDCG),
 						measures.get(Measure.MRR));
 
-		} else {
-			evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", measures.get(Measure.MAE),
-					measures.get(Measure.RMSE), measures.get(Measure.NMAE), measures.get(Measure.rMAE),
-					measures.get(Measure.rRMSE), measures.get(Measure.MPE));
-
-			// for some graphic models
-			if (measures.containsKey(Measure.Perplexity)) {
-				evalInfo += String.format(",%.6f", measures.get(Measure.Perplexity));
-			}
-		}
+//		} else {
+//			evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", measures.get(Measure.MAE),
+//					measures.get(Measure.RMSE), measures.get(Measure.NMAE), measures.get(Measure.rMAE),
+//					measures.get(Measure.rRMSE), measures.get(Measure.MPE));
+//
+//			// for some graphic models
+//			if (measures.containsKey(Measure.Perplexity)) {
+//				evalInfo += String.format(",%.6f", measures.get(Measure.Perplexity));
+//			}
+//		}
 
 		return evalInfo;
 	}
@@ -477,7 +485,8 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * Compute the correlation between two vectors using method specified by configuration key "similarity"
+	 * Compute the correlation between two vectors using method specified by
+	 * configuration key "similarity"
 	 * 
 	 * @param iv
 	 *            vector i
@@ -498,7 +507,8 @@ public abstract class Recommender implements Runnable {
 	 *            vector j
 	 * @param method
 	 *            similarity method
-	 * @return the correlation between vectors i and j; return NaN if the correlation is not computable.
+	 * @return the correlation between vectors i and j; return NaN if the
+	 *         correlation is not computable.
 	 */
 	protected double correlation(SparseVector iv, SparseVector jv, String method) {
 
@@ -550,8 +560,8 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * Learning method: override this method to build a model, for a model-based method. Default implementation is
-	 * useful for memory-based methods.
+	 * Learning method: override this method to build a model, for a model-based
+	 * method. Default implementation is useful for memory-based methods.
 	 * 
 	 */
 	protected void buildModel() throws Exception {
@@ -598,8 +608,11 @@ public abstract class Recommender implements Runnable {
 		String toFile = null;
 		if (isResultsOut) {
 			preds = new ArrayList<String>(1500);
-			preds.add("# userId itemId rating prediction"); // optional: file header
-			toFile = tempDirPath + algoName + "-rating-predictions" + foldInfo + ".txt"; // the output-file name
+			preds.add("# userId itemId rating prediction"); // optional: file
+															// header
+			toFile = tempDirPath + algoName + "-rating-predictions" + foldInfo + ".txt"; // the
+																							// output-file
+																							// name
 			FileIO.deleteFile(toFile); // delete possibly old files
 		}
 
@@ -663,7 +676,8 @@ public abstract class Recommender implements Runnable {
 
 		Map<Measure, Double> measures = new HashMap<>();
 		measures.put(Measure.MAE, mae);
-		// normalized MAE: useful for direct comparison among different data sets with distinct rating scales
+		// normalized MAE: useful for direct comparison among different data
+		// sets with distinct rating scales
 		measures.put(Measure.NMAE, mae / (maxRate - minRate));
 		measures.put(Measure.RMSE, rmse);
 
@@ -703,7 +717,8 @@ public abstract class Recommender implements Runnable {
 		List<Double> ndcgs = new ArrayList<>(capacity);
 
 		// candidate items for all users: here only training items
-		// use HashSet instead of ArrayList to speedup removeAll() and contains() operations: HashSet: O(1); ArrayList: O(log n).
+		// use HashSet instead of ArrayList to speedup removeAll() and
+		// contains() operations: HashSet: O(1); ArrayList: O(log n).
 		Set<Integer> candItems = new HashSet<>(trainMatrix.columns());
 
 		List<String> preds = null;
@@ -711,9 +726,14 @@ public abstract class Recommender implements Runnable {
 		int numTopNRanks = numRecs < 0 ? 10 : numRecs;
 		if (isResultsOut) {
 			preds = new ArrayList<String>(1500);
-			preds.add("# userId: recommendations in (itemId, ranking score) pairs, where a correct recommendation is denoted by symbol *."); // optional: file header
+			preds.add(
+					"# userId: recommendations in (itemId, ranking score) pairs, where a correct recommendation is denoted by symbol *."); // optional:
+																																			// file
+																																			// header
 			toFile = tempDirPath
-					+ String.format("%s-top-%d-items%s.txt", new Object[] { algoName, numTopNRanks, foldInfo }); // the output-file name
+					+ String.format("%s-top-%d-items%s.txt", new Object[] { algoName, numTopNRanks, foldInfo }); // the
+																													// output-file
+																													// name
 			FileIO.deleteFile(toFile); // delete possibly old files
 		}
 
@@ -765,7 +785,7 @@ public abstract class Recommender implements Runnable {
 			// predict the ranking scores (unordered) of all candidate items
 			List<Map.Entry<Integer, Double>> itemScores = new ArrayList<>(Lists.initSize(candItems));
 			for (final Integer j : candItems) {
-				// item j is not rated 
+				// item j is not rated
 				if (!ratedItems.contains(j)) {
 					final double rank = ranking(u, j);
 					if (!Double.isNaN(rank)) {
@@ -779,7 +799,8 @@ public abstract class Recommender implements Runnable {
 			if (itemScores.size() == 0)
 				continue; // no recommendations available for user u
 
-			// order the ranking scores from highest to lowest: List to preserve orders
+			// order the ranking scores from highest to lowest: List to preserve
+			// orders
 			Lists.sortList(itemScores, true);
 			List<Map.Entry<Integer, Double>> recomd = (numRecs <= 0 || itemScores.size() <= numRecs) ? itemScores
 					: itemScores.subList(0, numRecs);
@@ -869,9 +890,200 @@ public abstract class Recommender implements Runnable {
 		return measures;
 	}
 
+	protected Map<Measure, Double> evalRankingsPerItem() throws Exception {
+		System.out.println("Audience Retrieval");
+		int capacity = Lists.initSize(testMatrix.numColumns());
+
+		// initialization capacity to speed up
+		List<Double> ds5 = new ArrayList<>(isDiverseUsed ? capacity : 0);
+		List<Double> ds10 = new ArrayList<>(isDiverseUsed ? capacity : 0);
+
+		List<Double> precs5 = new ArrayList<>(capacity);
+		List<Double> precs10 = new ArrayList<>(capacity);
+		List<Double> recalls5 = new ArrayList<>(capacity);
+		List<Double> recalls10 = new ArrayList<>(capacity);
+		List<Double> aps = new ArrayList<>(capacity);
+		List<Double> rrs = new ArrayList<>(capacity);
+		List<Double> aucs = new ArrayList<>(capacity);
+		List<Double> ndcgs = new ArrayList<>(capacity);
+
+		// candidate users for all items: here only training users
+		// use HashSet instead of ArrayList to speedup removeAll() and
+		// contains() operations: HashSet: O(1); ArrayList: O(log n).
+		Set<Integer> candUsers = new HashSet<>(trainMatrix.rows());
+
+		List<String> preds = null;
+		String toFile = null;
+		int numTopNRanks = numRecs < 0 ? 10 : numRecs;
+		if (isResultsOut) {
+			preds = new ArrayList<String>(1500);
+			preds.add(
+					"# itemId: recommendations in (userId, ranking score) pairs, where a correct recommendation is denoted by symbol *."); // optional:
+																																			// file
+																																			// header
+			toFile = tempDirPath
+					+ String.format("%s-top-%d-items%s.txt", new Object[] { algoName, numTopNRanks, foldInfo }); // the
+																													// output-file
+																													// name
+			FileIO.deleteFile(toFile); // delete possibly old files
+		}
+
+		if (verbose)
+			Logs.debug("{}{} has candidate users: {}", algoName, foldInfo, candUsers.size());
+
+		// ignore users for all items: most popular users
+		if (numIgnore > 0) {
+			List<Map.Entry<Integer, Integer>> userDegs = new ArrayList<>();
+			for (Integer v : candUsers) {
+				userDegs.add(new SimpleImmutableEntry<Integer, Integer>(v, trainMatrix.rowSize(v)));
+			}
+			Lists.sortList(userDegs, true);
+			int k = 0;
+			for (Map.Entry<Integer, Integer> deg : userDegs) {
+
+				// ignore these users from candidate users
+				candUsers.remove(deg.getKey());
+				if (++k >= numIgnore)
+					break;
+			}
+		}
+
+		// for each test item
+		for (int k = 0, km = testMatrix.numColumns(); k < km; k++) {
+
+			if (verbose && ((k + 1) % 100 == 0))
+				Logs.debug("{}{} evaluates progress: {} / {}", algoName, foldInfo, k + 1, km);
+
+			// number of candidate users for all items
+			int numCands = candUsers.size();
+
+			// get positive users from test matrix
+			List<Integer> testUsers = testMatrix.getRows(k);
+			List<Integer> correctUsers = new ArrayList<>();
+
+			// intersect with the candidate items
+			for (Integer w : testUsers) {
+				if (candUsers.contains(w))
+					correctUsers.add(w);
+			}
+
+			if (correctUsers.size() == 0)
+				continue; // no testing data for item k
+
+			// remove rated users from candidate users
+			List<Integer> ratedUsers = trainMatrix.getRows(k);
+
+			// predict the ranking scores (unordered) of all candidate users
+			List<Map.Entry<Integer, Double>> userScores = new ArrayList<>(Lists.initSize(candUsers));
+			for (final Integer w : candUsers) {
+				// user w has not rated k
+				if (!ratedUsers.contains(w)) {
+					final double rank = ranking(w, k);
+					if (!Double.isNaN(rank)) {
+						userScores.add(new SimpleImmutableEntry<Integer, Double>(w, rank));
+					}
+				} else {
+					numCands--;
+				}
+			}
+
+			if (userScores.size() == 0)
+				continue; // no recommendations available for item k
+
+			// order the ranking scores from highest to lowest: List to preserve
+			// orders
+			Lists.sortList(userScores, true);
+			List<Map.Entry<Integer, Double>> recomd = (numRecs <= 0 || userScores.size() <= numRecs) ? userScores
+					: userScores.subList(0, numRecs);
+
+			List<Integer> rankedUsers = new ArrayList<>();
+			StringBuilder sb = new StringBuilder();
+			int count = 0;
+			for (Map.Entry<Integer, Double> kv : recomd) {
+				Integer user = kv.getKey();
+				rankedUsers.add(user);
+
+				if (isResultsOut && count < numTopNRanks) {
+					// restore back to the original user id
+					sb.append("(").append(rateDao.getUserId(user));
+
+					if (testUsers.contains(user))
+						sb.append("*"); // indicating correct recommendation
+
+					sb.append(", ").append(kv.getValue().floatValue()).append(")");
+
+					count++;
+
+					if (count < numTopNRanks)
+						sb.append(", ");
+				}
+			}
+
+			int numDropped = numCands - rankedUsers.size();
+			double AUC = Measures.AUC(rankedUsers, correctUsers, numDropped);
+			double AP = Measures.AP(rankedUsers, correctUsers);
+			double nDCG = Measures.nDCG(rankedUsers, correctUsers);
+			double RR = Measures.RR(rankedUsers, correctUsers);
+
+			List<Integer> cutoffs = Arrays.asList(5, 10);
+			Map<Integer, Double> precs = Measures.PrecAt(rankedUsers, correctUsers, cutoffs);
+			Map<Integer, Double> recalls = Measures.RecallAt(rankedUsers, correctUsers, cutoffs);
+
+			precs5.add(precs.get(5));
+			precs10.add(precs.get(10));
+			recalls5.add(recalls.get(5));
+			recalls10.add(recalls.get(10));
+
+			aucs.add(AUC);
+			aps.add(AP);
+			rrs.add(RR);
+			ndcgs.add(nDCG);
+
+			// diversity
+			if (isDiverseUsed) {
+				double d5 = diverseAt(rankedUsers, 5);
+				double d10 = diverseAt(rankedUsers, 10);
+
+				ds5.add(d5);
+				ds10.add(d10);
+			}
+
+			// output predictions
+			if (isResultsOut) {
+				// restore back to the original user id
+				preds.add(rateDao.getItemId(k) + ": " + sb.toString());
+				if (preds.size() >= 1000) {
+					FileIO.writeList(toFile, preds, true);
+					preds.clear();
+				}
+			}
+		}
+
+		// write results out first
+		if (isResultsOut && preds.size() > 0) {
+			FileIO.writeList(toFile, preds, true);
+			Logs.debug("{}{} has writeen item recommendations to {}", algoName, foldInfo, toFile);
+		}
+
+		// measure the performance
+		Map<Measure, Double> measures = new HashMap<>();
+		measures.put(Measure.D5, isDiverseUsed ? Stats.mean(ds5) : 0.0);
+		measures.put(Measure.D10, isDiverseUsed ? Stats.mean(ds10) : 0.0);
+		measures.put(Measure.Pre5, Stats.mean(precs5));
+		measures.put(Measure.Pre10, Stats.mean(precs10));
+		measures.put(Measure.Rec5, Stats.mean(recalls5));
+		measures.put(Measure.Rec10, Stats.mean(recalls10));
+		measures.put(Measure.AUC, Stats.mean(aucs));
+		measures.put(Measure.NDCG, Stats.mean(ndcgs));
+		measures.put(Measure.MAP, Stats.mean(aps));
+		measures.put(Measure.MRR, Stats.mean(rrs));
+
+		return measures;
+	}
+
 	/**
-	 * predict a specific rating for user u on item j. It is useful for evalution which requires predictions are
-	 * bounded.
+	 * predict a specific rating for user u on item j. It is useful for
+	 * evalution which requires predictions are bounded.
 	 * 
 	 * @param u
 	 *            user id
@@ -895,8 +1107,9 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * predict a specific rating for user u on item j, note that the prediction is not bounded. It is useful for
-	 * building models with no need to bound predictions.
+	 * predict a specific rating for user u on item j, note that the prediction
+	 * is not bounded. It is useful for building models with no need to bound
+	 * predictions.
 	 * 
 	 * @param u
 	 *            user id
@@ -913,7 +1126,8 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * predict a ranking score for user u on item j: default case using the unbounded predicted rating values
+	 * predict a ranking score for user u on item j: default case using the
+	 * unbounded predicted rating values
 	 * 
 	 * @param u
 	 *            user id
@@ -966,8 +1180,9 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * Below are a set of mathematical functions. As many recommenders often adopts them, for conveniency's sake, we put
-	 * these functions in the base Recommender class, though they belong to Math class.
+	 * Below are a set of mathematical functions. As many recommenders often
+	 * adopts them, for conveniency's sake, we put these functions in the base
+	 * Recommender class, though they belong to Math class.
 	 * 
 	 */
 
@@ -993,7 +1208,8 @@ public abstract class Recommender implements Runnable {
 	 * @param sigma
 	 *            standard deviation of normation distribution
 	 * 
-	 * @return a gaussian value with mean {@code mu} and standard deviation {@code sigma};
+	 * @return a gaussian value with mean {@code mu} and standard deviation
+	 *         {@code sigma};
 	 */
 	protected double gaussian(double x, double mu, double sigma) {
 		return Math.exp(-0.5 * Math.pow(x - mu, 2) / (sigma * sigma));
@@ -1007,7 +1223,8 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * Check if ratings have been binarized; useful for methods that require binarized ratings;
+	 * Check if ratings have been binarized; useful for methods that require
+	 * binarized ratings;
 	 */
 	protected void checkBinary() {
 		if (binThold < 0) {

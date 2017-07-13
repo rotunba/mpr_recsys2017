@@ -39,7 +39,6 @@ import librec.data.DataDAO;
 import librec.data.DataSplitter;
 import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
-import librec.ext.AR;
 import librec.ext.External;
 import librec.ext.Hybrid;
 import librec.ext.NMF;
@@ -50,6 +49,7 @@ import librec.intf.GraphicRecommender;
 import librec.intf.IterativeRecommender;
 import librec.intf.Recommender;
 import librec.intf.Recommender.Measure;
+import librec.ranking.AR;
 import librec.ranking.BHfree;
 import librec.ranking.BPR;
 import librec.ranking.BUCM;
@@ -60,12 +60,14 @@ import librec.ranking.GBPR;
 import librec.ranking.ItemBigram;
 import librec.ranking.LDA;
 import librec.ranking.LRMF;
+import librec.ranking.MPR;
 import librec.ranking.RankALS;
 import librec.ranking.RankSGD;
 import librec.ranking.SBPR;
 import librec.ranking.SLIM;
 import librec.ranking.WBPR;
 import librec.ranking.WRMF;
+import librec.ranking.eALS;
 import librec.rating.BPMF;
 import librec.rating.BiasedMF;
 import librec.rating.CPTF;
@@ -765,6 +767,8 @@ public class LibRec {
 			/* item ranking */
 		case "climf":
 			return new CLiMF(trainMatrix, testMatrix, fold);
+		case "eals":
+			return new eALS(trainMatrix, testMatrix, fold);
 		case "fismrmse":
 			return new FISMrmse(trainMatrix, testMatrix, fold);
 		case "fism":
@@ -780,6 +784,10 @@ public class LibRec {
 			return new WRMF(trainMatrix, testMatrix, fold);
 		case "bpr":
 			return new BPR(trainMatrix, testMatrix, fold);
+		case "mpr":
+			return new MPR(trainMatrix, testMatrix, fold);
+		case "ar":
+			return new AR(trainMatrix, testMatrix, fold);
 		case "wbpr":
 			return new WBPR(trainMatrix, testMatrix, fold);
 		case "gbpr":
@@ -800,8 +808,6 @@ public class LibRec {
 			return new SlopeOne(trainMatrix, testMatrix, fold);
 		case "pd":
 			return new PD(trainMatrix, testMatrix, fold);
-		case "ar":
-			return new AR(trainMatrix, testMatrix, fold);
 		case "prankd":
 			return new PRankD(trainMatrix, testMatrix, fold);
 		case "external":
@@ -849,7 +855,7 @@ public class LibRec {
 		String about = "\nLibRec version " + version + ", copyright (C) 2014-2015 Guibing Guo \n\n"
 
 		/* Description */
-		+ "LibRec is free software: you can redistribute it and/or modify \n"
+				+ "LibRec is free software: you can redistribute it and/or modify \n"
 				+ "it under the terms of the GNU General Public License as published by \n"
 				+ "the Free Software Foundation, either version 3 of the License, \n"
 				+ "or (at your option) any later version. \n\n"

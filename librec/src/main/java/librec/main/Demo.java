@@ -53,27 +53,15 @@ public class Demo {
 		// set the folder path for configuration files
 		String configDirPath = FileIO.makeDirPath(dirPath, "config");
 
-		// prepare candidate options
-		List<String> candOptions = new ArrayList<>();
+		List candOptions = new ArrayList();
 		candOptions.add("General Usage:");
-		candOptions.add(" 0: the format of rating prediction results;");
 		candOptions.add(" 1: the format of item recommendation results;");
 		candOptions.add(" 2: run an algorithm by name [Input: 2 algoName];");
 		candOptions.add(" 3: help & about this demo;");
 		candOptions.add("-1: quit the demo!");
 		candOptions.add("");
-		candOptions.add("Part I: baselines");
-		candOptions.add("10: Global Average;   11: User Average;  12: Item Average;");
-		candOptions.add("13: Most Popularity;  14: User Cluster;  15: Item Cluster;");
-		candOptions.add("16: Association Rule; 17: Non-neg MF;    18: Slope One;");
-		candOptions.add("");
-		candOptions.add("Part II: rating prediction");
-		candOptions.add("20: UserKNN;\t 21: ItemKNN; \t 22: TrustSVD; ");
-		candOptions.add("23: RegSVD; \t 24: BiasedMF;\t 25: SVD++; ");
-		candOptions.add("");
-		candOptions.add("Part III: item recommendation");
-		candOptions.add("30: LDA;    \t 31: BPR;     \t 32: FISM; ");
-		candOptions.add("33: WRMF;   \t 34: SLIM;    \t 35: RankALS. ");
+
+		candOptions.add("10: MPR; \t 11: AR; \t 12: BPR;  \t 13: MostPop; \t 14: eALS;");
 
 		int option = 0;
 		boolean flag = false;
@@ -84,84 +72,120 @@ public class Demo {
 			System.out.print("Please choose your command id: ");
 			option = reader.nextInt();
 
-			// print an empty line
 			Logs.debug();
 			flag = false;
 
-			// get algorithm-specific configuration file
 			switch (option) {
 			case 10:
-				configFile = "GlobalAvg.conf";
+				configFile = "MPR.conf";
 				break;
 			case 11:
-				configFile = "UserAvg.conf";
+				configFile = "AR.conf";
 				break;
 			case 12:
-				configFile = "ItemAvg.conf";
+				configFile = "BPR.conf";
 				break;
 			case 13:
 				configFile = "MostPop.conf";
 				break;
 			case 14:
-				configFile = "UserCluster.conf";
+				configFile = "eALS.conf";
 				break;
 			case 15:
-				configFile = "ItemCluster.conf";
+				configFile = "eALS.conf";
 				break;
 			case 16:
-				configFile = "AR.conf";
+				configFile = "AoBPRRankNet.conf";
 				break;
 			case 17:
-				configFile = "NMF.conf";
+				configFile = "AoBPRLambdaNDCG.conf";
 				break;
 			case 18:
-				configFile = "SlopeOne.conf";
+				configFile = "AoBPRLambdaMAP.conf";
+				break;
+			case 19:
+				configFile = "AoBPRLambdaMRR.conf";
 				break;
 			case 20:
-				configFile = "UserKNN.conf";
+				configFile = "AoBPRLambdaAUC.conf";
 				break;
 			case 21:
-				configFile = "ItemKNN.conf";
+				configFile = "AoBPRLambdaCombo.conf";
 				break;
 			case 22:
-				configFile = "TrustSVD.conf";
+				configFile = "AoBPRLambdaMGDA.conf";
 				break;
 			case 23:
-				configFile = "RegSVD.conf";
+				configFile = "AoBPRAUC.conf";
 				break;
 			case 24:
-				configFile = "BiasedMF.conf";
+				configFile = "AoBPRNDCG.conf";
 				break;
 			case 25:
-				configFile = "SVD++.conf";
+				configFile = "AoBPRMAP.conf";
+				break;
+			case 26:
+				configFile = "AoBPRMGDA.conf";
+				break;
+			case 27:
+				configFile = "AoBPRLangrange.conf";
+				break;
+			case 28:
+				configFile = "AoBPRNIPS.conf";
+				break;
+			case 29:
+				configFile = "BPRLambdaComboWrapper.conf";
 				break;
 			case 30:
-				configFile = "LDA.conf";
-				break;
-			case 31:
-				configFile = "BPR.conf";
-				break;
-			case 32:
 				configFile = "FISM.conf";
 				break;
-			case 33:
-				configFile = "WRMF.conf";
+			case 31:
+				configFile = "FISMRMSE.conf";
 				break;
-			case 34:
+			case 32:
 				configFile = "SLIM.conf";
 				break;
+			case 33:
+				configFile = "SVD++.conf";
+				break;
+			case 34:
+				configFile = "ItemKNN.conf";
+				break;
 			case 35:
-				configFile = "RankALS.conf";
+				configFile = "AoBPRUserItem.conf";
+				break;
+			case 36:
+				configFile = "UserKNN.conf";
+				break;
+			case 37:
+				configFile = "BPRFUllPairwise.conf";
+				break;
+			case 38:
+				configFile = "UserCluster.conf";
+				break;
+			case 39:
+				configFile = "ItemCluster.conf";
+				break;
+			case 40:
+				configFile = "WRMF.conf";
+				break;
+			case 41:
+				configFile = "CLiMF.conf";
+				break;
+			case 42:
+				configFile = "AoBPR.conf";
 				break;
 			case -1:
 				flag = true;
 				break;
 			case 0:
-				Logs.debug("Prediction results: MAE, RMSE, NMAE, rMAE, rRMSE, MPE, <configuration>, training time, test time\n");
+				Logs.debug(
+						"Prediction results: MAE, RMSE, NMAE, rMAE, rRMSE, MPE, <configuration>, training time, test time\n");
 				Systems.pause();
 				continue;
 			case 1:
-				Logs.debug("Ranking results: Prec@5, Prec@10, Recall@5, Recall@10, AUC, MAP, NDCG, MRR, <configuration>, training time, test time\n");
+				Logs.debug(
+						"Ranking results: Prec@5, Prec@10, Recall@5, Recall@10, AUC, MAP, NDCG, MRR, <configuration>, training time, test time\n");
 				Systems.pause();
 				continue;
 			case 2:

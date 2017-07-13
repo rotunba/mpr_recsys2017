@@ -36,7 +36,7 @@ public class BPR extends IterativeRecommender {
 	public BPR(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		isRankingPred = true;
+		//isRankingPred = true;
 		initByNorm = false;
 	}
 	
@@ -83,7 +83,7 @@ public class BPR extends IterativeRecommender {
 				double vals = -Math.log(g(xuij));
 				loss += vals;
 
-				double cmg = g(-xuij);
+				double cmg = g(-xuij) * 0.5;
 
 				for (int f = 0; f < numFactors; f++) {
 					double puf = P.get(u, f);
@@ -97,6 +97,8 @@ public class BPR extends IterativeRecommender {
 					loss += regU * puf * puf + regI * qif * qif + regI * qjf * qjf;
 				}
 			}
+			
+			loss *= 0.5;
 
 			if (isConverged(iter))
 				break;

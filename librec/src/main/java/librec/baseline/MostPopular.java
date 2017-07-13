@@ -38,7 +38,7 @@ public class MostPopular extends Recommender {
 		super(trainMatrix, testMatrix, fold);
 
 		// force to set as the ranking prediction method
-		isRankingPred = true;
+		//isRankingPred = true;
 		setAlgoName("MostPop");
 	}
 

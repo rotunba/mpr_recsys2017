@@ -285,6 +285,20 @@ public abstract class IterativeRecommender extends Recommender {
 		userBias = (DenseVector) FileIO.deserialize(dirPath + "userBiases" + suffix);
 		itemBias = (DenseVector) FileIO.deserialize(dirPath + "itemBiases" + suffix);
 	}
+	
+	protected int[] diff(int items, int[] userList) {
+		boolean[] resultbool = new boolean[items];
+		int[] result = new int[items - userList.length];
+		int j = 0;
+		for (int i = 0; i < userList.length; i++) {
+			resultbool[userList[i]] = true;
+		}
+		for (int i = 0; i < resultbool.length; i++) {
+			if (!resultbool[i])
+				result[j++] = i;
+		}
+		return result;
+	}
 
 	@Override
 	public String toString() {
