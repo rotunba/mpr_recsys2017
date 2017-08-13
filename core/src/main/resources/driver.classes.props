@@ -36,6 +36,7 @@ useraverage=net.librec.recommender.baseline.UserAverageRecommender
 usercluster=net.librec.recommender.baseline.UserClusterRecommender
 aobpr=net.librec.recommender.cf.ranking.AoBPRRecommender
 ar=net.librec.recommender.cf.ranking.ARRecommender
+mpr=net.librec.recommender.cf.ranking.MPRRecommender
 aspectmodelranking=net.librec.recommender.cf.ranking.AspectModelRecommender
 bhfree=net.librec.recommender.cf.BHFreeRecommender
 bpr=net.librec.recommender.cf.ranking.BPRRecommender
